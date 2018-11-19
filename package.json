@@ -1,0 +1,24 @@
+{
+  "name": "react-native-share-extension",
+  "version": "1.6.1",
+  "description": "share extension using react-native for both ios and android",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com/BachirKhiati/react-native-share-extension.git"
+  },
+  "keywords": [
+    "react-component",
+    "react-native",
+    "share-extension"
+  ],
+  "author": "Bachir Khiati <bachir.Khiati.@gmail.com> (http://github.com/BachirKhiati)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BachirKhiati/rn-share-extension"
+  },
+  "homepage": "https://github.com/BachirKhiati/rn-share-extension"
+}
