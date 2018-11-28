@@ -1,6 +1,5 @@
 This Module was originally forked from https://github.com/alinz/react-native-share-extension and was modified in order to share multiple images with your host app by using AppGroups
 
-The Documentation is not 100% up to date! PR are anytime welcome :)
 
 # React Native Share Extension
 
