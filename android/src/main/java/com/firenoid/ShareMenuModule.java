@@ -1,5 +1,6 @@
 package com.firenoid;
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
@@ -48,20 +49,27 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
   }  
 
   @ReactMethod
-  public void getSharedText(Callback successCallback) {
+
+  public void getSharedText(final Callback successCb, final Callback failureCb) {
     Activity mActivity = getCurrentActivity();
-    
-    if(mActivity == null) { return; }
+
+
+    if(mActivity == null) {
+      successCb.invoke(false);
+      return ; }
     
     Intent intent = mActivity.getIntent();
     String action = intent.getAction();
     String type = intent.getType();
 
+
+
+
     if (Intent.ACTION_SEND.equals(action) && type != null) {
       if ("text/plain".equals(type)) {
 
         String input = intent.getStringExtra(Intent.EXTRA_TEXT);
-        successCallback.invoke(input);
+            successCb.invoke(input);
       } else if (type.startsWith("image/") || type.startsWith("video/")) {
         Integer imageHeight = null, imageWidth = null;
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
@@ -79,9 +87,10 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
             map.putString("uri", imageUri.toString());
             map.putInt("width", imageWidth);
             map.putInt("height", imageHeight);
-            successCallback.invoke(map);
+            successCb.invoke(map);
           } catch (FileNotFoundException e) {
-            successCallback.invoke("null");
+
+            successCb.invoke(false);
             e.printStackTrace();
           }
 
@@ -97,11 +106,13 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
             for (Uri uri: imageUris) {
               completeString += uri.toString() + ",";
             }
-            successCallback.invoke(completeString);
+            successCb.invoke(completeString);
           }
         } else {
           Toast.makeText(mReactContext, "Type is not support", Toast.LENGTH_SHORT).show();
         }
+    }else{
+      successCb.invoke(false);
     }
   }
 
