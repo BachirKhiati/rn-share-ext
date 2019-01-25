@@ -25,6 +25,13 @@ NSExtensionContext* extensionContext;
 
 RCT_EXPORT_MODULE();
 
+
+
++ (BOOL)requiresMainQueueSetup
+{
+    return NO;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
 
@@ -40,6 +47,7 @@ RCT_EXPORT_MODULE();
     self.view = rootView;
 }
 
+
  
 
 - (void)loads:(void(^)(NSArray* items,  NSException *exception))callback  {
@@ -53,10 +61,16 @@ RCT_EXPORT_MODULE();
     [self extractDataFromContext: extensionContext withCallback:^(NSString* val,UIImage* image, NSString* contentType, NSException* err) {
         NSLog(@"callback-> val:%@, contentType:%@, err:%@",val,contentType,err);
         _task = _task + 1;
-        if (nil != image){
+        if (nil != image  ){
             NSDictionary* item = NSDictionaryOfVariableBindings(val,image,contentType);
             [_taskItems addObject:item];
         }
+        
+        if (nil == image &&  nil!= val ){
+            NSDictionary* item = NSDictionaryOfVariableBindings(val,val,contentType);
+            [_taskItems addObject:item];
+        }
+        
         NSLog(@"_taskTotal=%d, _task=%d",_taskTotal, _task);
         if ( _taskTotal == _task){
             callback(_taskItems,nil);
@@ -139,7 +153,7 @@ RCT_REMAP_METHOD(data,
                     if(image){
                         if(callback) {
                             
-                            callback(@"binary image here", image, @".png", nil);
+                            callback(@"binary image here", image, @".jpeg", nil);
                         }
                     }
                 }];
@@ -153,7 +167,9 @@ RCT_REMAP_METHOD(data,
                 NSURL *url = (NSURL *)item;
                 
                 if(callback) {
-                    callback([url absoluteString],nil, @"text/plain", nil);
+//                    callback([url absoluteString],nil, @"text/plain", nil);
+                    callback([url absoluteString],nil, @".jpeg", nil);
+
                 }
             }];
         } else if (imageProvider) {
@@ -174,7 +190,7 @@ RCT_REMAP_METHOD(data,
                 NSString *text = (NSString *)item;
                 
                 if(callback) {
-                    callback(text, nil, @"text/plain", nil);
+                    callback(text, nil, @".jpg", nil);
                 }
             }];
         } else {
