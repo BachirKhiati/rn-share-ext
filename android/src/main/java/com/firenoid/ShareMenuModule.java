@@ -14,11 +14,15 @@ import com.firenoid.ShareMenuPackage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 
+import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.widget.Toast;
@@ -67,32 +71,16 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
 
     if (Intent.ACTION_SEND.equals(action) && type != null) {
       if ("text/plain".equals(type)) {
-
         String input = intent.getStringExtra(Intent.EXTRA_TEXT);
             successCb.invoke(input);
       } else if (type.startsWith("image/") || type.startsWith("video/")) {
-        Integer imageHeight = null, imageWidth = null;
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
-          BitmapFactory.Options options = new BitmapFactory.Options();
-          options.inJustDecodeBounds = true;
-          InputStream in = null;
-          try {
-            in = mReactContext.getContentResolver().openInputStream(
-                    imageUri);
-            BitmapFactory.decodeStream(in, null, options);
-            imageHeight = options.outHeight;
-            imageWidth = options.outWidth;
+          String tempPhoto = getPathFromInputStreamUri(mReactContext, imageUri);
+          Uri photo = Uri.fromFile(new File(tempPhoto));
             WritableMap map = new WritableNativeMap();
-            map.putString("uri", imageUri.toString());
-            map.putInt("width", imageWidth);
-            map.putInt("height", imageHeight);
+            map.putString("uri", photo.toString());
             successCb.invoke(map);
-          } catch (FileNotFoundException e) {
-
-            successCb.invoke(false);
-            e.printStackTrace();
-          }
 
         }
       } else {
@@ -104,7 +92,9 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
           if (imageUris != null) {
             String completeString = new String();
             for (Uri uri: imageUris) {
-              completeString += uri.toString() + ",";
+              String tempPhoto = getPathFromInputStreamUri(mReactContext, uri);
+              Uri photo = Uri.fromFile(new File(tempPhoto));
+              completeString += photo.toString() + ",";
             }
             successCb.invoke(completeString);
           }
@@ -139,4 +129,59 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
     int imageWidth = options.outWidth;
 
   }
+
+  public static String getPathFromInputStreamUri(Context context, Uri uri) {
+    InputStream inputStream = null;
+    String filePath = null;
+
+    if (uri.getAuthority() != null) {
+      try {
+        inputStream = context.getContentResolver().openInputStream(uri);
+        File photoFile = createTemporalFileFrom(inputStream, context);
+
+        filePath = photoFile.getPath();
+
+      } catch (FileNotFoundException e) {
+      //  Logger.printStackTrace(e);
+      } catch (IOException e) {
+      //  Logger.printStackTrace(e);
+      } finally {
+        try {
+          if (inputStream != null) {
+            inputStream.close();
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
+    return filePath;
+  }
+
+  private static File createTemporalFileFrom(InputStream inputStream, Context ctx) throws IOException {
+    File targetFile = null;
+
+    if (inputStream != null) {
+      int read;
+      byte[] buffer = new byte[8 * 1024];
+
+      targetFile = new File(ctx.getCacheDir(), "tempPicture.jpg");
+      OutputStream outputStream = new FileOutputStream(targetFile);
+
+      while ((read = inputStream.read(buffer)) != -1) {
+        outputStream.write(buffer, 0, read);
+      }
+      outputStream.flush();
+
+      try {
+        outputStream.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    return targetFile;
+  }
+
 }
