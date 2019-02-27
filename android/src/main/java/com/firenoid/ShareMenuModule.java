@@ -166,7 +166,7 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
       int read;
       byte[] buffer = new byte[8 * 1024];
 
-      targetFile = new File(ctx.getCacheDir(), "tempPicture.jpg");
+      targetFile = new File(ctx.getCacheDir(), System.currentTimeMillis()+"tempPicture.jpg");
       OutputStream outputStream = new FileOutputStream(targetFile);
 
       while ((read = inputStream.read(buffer)) != -1) {
