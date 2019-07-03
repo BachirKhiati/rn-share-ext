@@ -4,6 +4,10 @@
 
 #define URL_IDENTIFIER @"public.url"
 #define IMAGE_IDENTIFIER @"public.image"
+#define VIDEO_IDENTIFIER @"public.movie"
+#define VIDEO_MPEG_IDENTIFIER @"public.mpeg"
+#define VIDEO_MPEG4_IDENTIFIER @"public.mpeg-4"
+#define VIDEO_TIME_IDENTIFIER @"com.apple.quicktime-movie"
 #define TEXT_IDENTIFIER (NSString *)kUTTypePlainText
 
 NSExtensionContext* extensionContext;
@@ -128,9 +132,9 @@ RCT_REMAP_METHOD(data,
     @try {
       //  NSExtensionItem *item = [context.inputItems firstObject];
      //   NSArray *attachments = item.attachments;
-        
         __block NSItemProvider *urlProvider = nil;
         __block NSItemProvider *imageProvider = nil;
+        __block NSItemProvider *videoProvider = nil;
         __block NSItemProvider *textProvider = nil;
         
       //  [attachments enumerateObjectsUsingBlock:^(NSItemProvider *provider, NSUInteger idx, BOOL *stop) {
@@ -143,25 +147,79 @@ RCT_REMAP_METHOD(data,
             } else if ([provider hasItemConformingToTypeIdentifier:IMAGE_IDENTIFIER]){
                 imageProvider = provider;
               //  *stop = YES;
+            } else if ([provider hasItemConformingToTypeIdentifier:VIDEO_IDENTIFIER]){
+                videoProvider = provider;
+                //  *stop = YES;
             }
+//            else if ([provider hasItemConformingToTypeIdentifier:VIDEO_MPEG_IDENTIFIER] || [provider hasItemConformingToTypeIdentifier:VIDEO_MPEG4_IDENTIFIER] || [provider hasItemConformingToTypeIdentifier:VIDEO_TIME_IDENTIFIER] || [provider hasItemConformingToTypeIdentifier:VIDEO_TIME_IDENTIFIER]){
+//                videoProvider = provider;
+//                //  *stop = YES;
+//            }
       //  }];
         
         //  Look for an image inside the NSItemProvider
-        if (imageProvider){
-            if([imageProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeImage]){
-                [imageProvider loadItemForTypeIdentifier:(NSString *)kUTTypeImage options:nil completionHandler:^(UIImage *image, NSError *error) {
-                    if(image){
-                        if(callback) {
-                            
-                            callback(@"binary image here", image, @".jpeg", nil);
-                        }
+    if (imageProvider){
+        if([imageProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeImage]){
+            [imageProvider loadItemForTypeIdentifier:(NSString *)kUTTypeImage options:nil completionHandler:^(UIImage *image, NSError *error) {
+                if(image){
+                    if(callback) {
+                        
+                        callback(@"binary image here", image, @".jpeg", nil);
                     }
-                }];
-                return ;
-            }
-            
+                }
+            }];
+            return ;
         }
         
+    }
+        
+      if (videoProvider){
+                NSString *videoTypeIdentifier = nil;
+                NSString *Extenstion = nil;
+          
+                if([videoProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeQuickTimeMovie]){
+                
+                 videoTypeIdentifier = (NSString *)kUTTypeQuickTimeMovie;
+                    Extenstion = @".mov";
+                    
+                } else if ([videoProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeMPEG4]){
+                     videoTypeIdentifier = (NSString *)kUTTypeMPEG4;
+                     Extenstion = @".mp4";
+                }
+                else if ([videoProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeMPEG]){
+                    videoTypeIdentifier = (NSString *)kUTTypeMPEG;
+                    Extenstion = @".mp4";
+                }
+                else if ([videoProvider hasItemConformingToTypeIdentifier:(NSString *)kUTTypeMovie]){
+                    videoTypeIdentifier = (NSString *)kUTTypeMovie;
+                    Extenstion = @".mov";
+                }
+                
+                for (NSExtensionItem *item in self.extensionContext.inputItems)
+                {
+                    for (NSItemProvider *itemProvider in item.attachments)
+                    {
+                        if ([itemProvider hasItemConformingToTypeIdentifier:videoTypeIdentifier])
+                        {
+                            NSLog(@"Found url of video"); //
+                            [itemProvider loadItemForTypeIdentifier:videoTypeIdentifier
+                                                            options:nil
+                                                  completionHandler:^(NSURL *url, NSError *error)
+                             {
+                                 NSLog(@"url = %@",url);// its always nil
+                                  NSLog(@"url = %@",error);// its always nil
+                                   if(url){
+                                 callback([url absoluteString],nil, Extenstion, nil);
+                                   } else {
+                                       callback(@"file://" ,nil, Extenstion, nil);
+                                   }
+                             }];
+                        }
+                    }
+                }
+                return ;
+        }
+            
         if(urlProvider) {
             [urlProvider loadItemForTypeIdentifier:URL_IDENTIFIER options:nil completionHandler:^(id<NSSecureCoding> item, NSError *error) {
                 NSURL *url = (NSURL *)item;
@@ -190,7 +248,7 @@ RCT_REMAP_METHOD(data,
                 NSString *text = (NSString *)item;
                 
                 if(callback) {
-                    callback(text, nil, @".jpg", nil);
+                    callback(text, nil, @".jpeg", nil);
                 }
             }];
         } else {
