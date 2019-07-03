@@ -76,7 +76,7 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
       } else if (type.startsWith("image/") || type.startsWith("video/")) {
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
-          String tempPhoto = getPathFromInputStreamUri(mReactContext, imageUri);
+          String tempPhoto = getPathFromInputStreamUri(mReactContext, imageUri, type);
           Uri photo = Uri.fromFile(new File(tempPhoto));
             WritableMap map = new WritableNativeMap();
             map.putString("uri", photo.toString());
@@ -92,7 +92,7 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
           if (imageUris != null) {
             String completeString = new String();
             for (Uri uri: imageUris) {
-              String tempPhoto = getPathFromInputStreamUri(mReactContext, uri);
+              String tempPhoto = getPathFromInputStreamUri(mReactContext, uri, type);
               Uri photo = Uri.fromFile(new File(tempPhoto));
               completeString += photo.toString() + ",";
             }
@@ -130,14 +130,14 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
 
   }
 
-  public static String getPathFromInputStreamUri(Context context, Uri uri) {
+  public static String getPathFromInputStreamUri(Context context, Uri uri, String type) {
     InputStream inputStream = null;
     String filePath = null;
 
     if (uri.getAuthority() != null) {
       try {
         inputStream = context.getContentResolver().openInputStream(uri);
-        File photoFile = createTemporalFileFrom(inputStream, context);
+        File photoFile = createTemporalFileFrom(inputStream, context, type);
 
         filePath = photoFile.getPath();
 
@@ -159,14 +159,18 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
     return filePath;
   }
 
-  private static File createTemporalFileFrom(InputStream inputStream, Context ctx) throws IOException {
+  private static File createTemporalFileFrom(InputStream inputStream, Context ctx, String type) throws IOException {
     File targetFile = null;
 
     if (inputStream != null) {
       int read;
       byte[] buffer = new byte[8 * 1024];
+      if (type.startsWith("image/")) {
+        targetFile = new File(ctx.getCacheDir(), System.currentTimeMillis()+"tempPicture.jpeg");
+      }else if (type.startsWith("video/")) {
+        targetFile = new File(ctx.getCacheDir(), System.currentTimeMillis()+"tempvideo.mp4");
+      }
 
-      targetFile = new File(ctx.getCacheDir(), System.currentTimeMillis()+"tempPicture.jpg");
       OutputStream outputStream = new FileOutputStream(targetFile);
 
       while ((read = inputStream.read(buffer)) != -1) {
