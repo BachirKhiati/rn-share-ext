@@ -24,6 +24,7 @@ import java.util.ArrayList;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
+import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 import android.app.Activity;
@@ -111,14 +112,12 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
     Activity mActivity = getCurrentActivity();
     
     if(mActivity == null) { return; }
-
     Intent intent = mActivity.getIntent();
-    String type = intent.getType();
-    if ("text/plain".equals(type)) {
-      intent.removeExtra(Intent.EXTRA_TEXT);
-    } else if (type.startsWith("image/") || type.startsWith("video/")) {
-      intent.removeExtra(Intent.EXTRA_STREAM);
-    }
+    if(intent == null) { return; }
+    intent.replaceExtras(new Bundle());
+    intent.setAction("");
+    intent.setData(null);
+    intent.setFlags(0);
   }
 
   private void getImageWidthAndHeight(Uri uri){
